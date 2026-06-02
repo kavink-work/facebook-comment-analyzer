@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Player Insight Hub — TOSM Extreme</title>
+
+<!-- Libraries (CDN) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<style>
+  :root {
+    --bg: #f4f6fb; --surface: #ffffff; --surface-2: #f0f3f9; --border: #e1e6ef;
+    --text: #1b2330; --text-soft: #5a6473; --accent: #4f6ef7; --accent-soft: #eaeefe;
+    --pos: #1faa72; --neu: #c9912a; --neg: #e0544b;
+    --shadow: 0 1px 3px rgba(20,30,50,.08), 0 6px 24px rgba(20,30,50,.06);
+  }
+  [data-theme="dark"] {
+    --bg: #0f141c; --surface: #161d28; --surface-2: #1d2632; --border: #2a3543;
+    --text: #e8edf5; --text-soft: #97a3b4; --accent: #6d87ff; --accent-soft: #1e2740;
+    --pos: #35c489; --neu: #e0b04a; --neg: #f0726a;
+    --shadow: 0 1px 3px rgba(0,0,0,.4), 0 8px 30px rgba(0,0,0,.35);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", "Sarabun", Roboto, system-ui, -apple-system, sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.55; -webkit-font-smoothing: antialiased; }
+
+  header.topbar { position: sticky; top: 0; z-index: 50; display: flex; align-items: center; gap: 16px;
+    padding: 12px 22px; background: var(--surface); border-bottom: 1px solid var(--border); box-shadow: var(--shadow); }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 17px; letter-spacing: .2px; }
+  .brand .dot { width: 11px; height: 11px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+  nav.routes { display: flex; gap: 4px; margin-left: 8px; flex-wrap: wrap; }
+  nav.routes a { text-decoration: none; color: var(--text-soft); padding: 8px 14px; border-radius: 9px;
+    font-size: 14px; font-weight: 600; transition: .15s; }
+  nav.routes a:hover { background: var(--surface-2); color: var(--text); }
+  nav.routes a.active { background: var(--accent-soft); color: var(--accent); }
+  .spacer { flex: 1; }
+  .icon-btn { border: 1px solid var(--border); background: var(--surface-2); color: var(--text);
+    height: 40px; min-width: 40px; padding: 0 12px; border-radius: 10px; cursor: pointer; font-size: 15px; font-weight:600;
+    display: inline-flex; align-items: center; justify-content: center; transition: .15s; }
+  .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  main { max-width: 1120px; margin: 0 auto; padding: 26px 22px 80px; }
+  .page { display: none; } .page.active { display: block; animation: fade .25s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(6px);} to {opacity:1; transform:none;} }
+  h1.page-title { font-size: 24px; margin: 4px 0 4px; }
+  .subtitle { color: var(--text-soft); margin: 0 0 22px; font-size: 14.5px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px 22px;
+    margin-bottom: 20px; box-shadow: var(--shadow); }
+  .card h2 { font-size: 16px; margin: 0 0 4px; display:flex; align-items:center; gap:9px; }
+  .card .hint { color: var(--text-soft); font-size: 13px; margin: 0 0 16px; }
+  .badge-num { width: 24px; height: 24px; border-radius: 7px; background: var(--accent-soft); color: var(--accent);
+    display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; }
+
+  label.fld { display:block; font-size:13px; font-weight:600; color: var(--text-soft); margin: 12px 0 6px; }
+  input[type=text], input[type=password], textarea, select { width: 100%; padding: 11px 13px; border: 1px solid var(--border);
+    border-radius: 10px; background: var(--surface-2); color: var(--text); font-size: 14px; font-family: inherit; }
+  textarea { min-height: 90px; resize: vertical; }
+  input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+
+  .btn { border: none; border-radius: 10px; padding: 11px 18px; font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: .15s; display: inline-flex; align-items: center; gap: 8px; font-family: inherit; }
+  .btn.primary { background: var(--accent); color: #fff; }
+  .btn.primary:hover { filter: brightness(1.07); }
+  .btn.primary:disabled { opacity: .55; cursor: not-allowed; }
+  .btn.ghost { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); }
+  .btn.ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+
+  .drop { border: 2px dashed var(--border); border-radius: 12px; padding: 22px; text-align: center; color: var(--text-soft);
+    cursor: pointer; transition: .15s; background: var(--surface-2); }
+  .drop:hover, .drop.over { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+  .tabs { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+  .tab { padding: 8px 15px; border-radius: 9px; cursor: pointer; font-size: 13.5px; font-weight: 600;
+    color: var(--text-soft); background: var(--surface-2); border: 1px solid var(--border); }
+  .tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .tabpane { display: none; } .tabpane.active { display: block; }
+
+  .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; max-height: 560px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { text-align: left; padding: 10px 13px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { background: var(--surface-2); font-size: 12px; text-transform: uppercase; letter-spacing: .4px; color: var(--text-soft);
+    position: sticky; top: 0; }
+  tr:last-child td { border-bottom: none; }
+  td.comment { max-width: 460px; }
+  .pill { display:inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+  .pill.pos { background: rgba(31,170,114,.15); color: var(--pos); }
+  .pill.neu { background: rgba(201,145,42,.18); color: var(--neu); }
+  .pill.neg { background: rgba(224,84,75,.16); color: var(--neg); }
+  .pill.cat { background: var(--accent-soft); color: var(--accent); }
+
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 14px; margin-bottom: 18px; }
+  .kpi { background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+  .kpi .num { font-size: 26px; font-weight: 700; } .kpi .lbl { font-size: 12.5px; color: var(--text-soft); margin-top: 2px; }
+  .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 760px) { .charts { grid-template-columns: 1fr; } }
+  .chart-box { background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+  .chart-box h3 { margin: 0 0 12px; font-size: 13.5px; color: var(--text-soft); }
+  .summary-text { font-size: 14.5px; line-height: 1.7; } .summary-text ul { padding-left: 20px; }
+
+  .modal-bg { position: fixed; inset: 0; background: rgba(8,12,20,.55); display: none; align-items: center;
+    justify-content: center; z-index: 100; padding: 20px; }
+  .modal-bg.show { display: flex; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; max-width: 540px; width: 100%;
+    padding: 24px; box-shadow: var(--shadow); max-height: 88vh; overflow-y: auto; }
+  .modal h2 { margin: 0 0 4px; font-size: 18px; }
+  .toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(120px); background: var(--text);
+    color: var(--bg); padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 600; box-shadow: var(--shadow);
+    transition: .3s; z-index: 200; max-width: 90%; text-align:center; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .muted { color: var(--text-soft); font-size: 12.5px; }
+  .placeholder-page { text-align:center; padding: 70px 20px; color: var(--text-soft); }
+  .placeholder-page .big { font-size: 40px; margin-bottom: 10px; }
+  .spin { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.4); border-top-color:#fff; border-radius: 50%;
+    display:inline-block; animation: rot .7s linear infinite; }
+  @keyframes rot { to { transform: rotate(360deg); } }
+  code.k { background: var(--surface-2); border:1px solid var(--border); padding: 1px 6px; border-radius: 5px; font-size: 12.5px; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand"><span class="dot"></span> Player Insight Hub</div>
+  <nav class="routes" id="nav">
+    <a href="#/feedback" data-route="feedback" data-i18n="nav_feedback">Feedback Analyzer</a>
+    <a href="#/page2" data-route="page2" data-i18n="nav_page2">Page Two</a>
+    <a href="#/page3" data-route="page3" data-i18n="nav_page3">Page Three</a>
+  </nav>
+  <div class="spacer"></div>
+  <button class="icon-btn" id="langBtn" title="ภาษา / Language">ไทย</button>
+  <button class="icon-btn" id="themeBtn" title="Toggle light/dark">🌙</button>
+  <button class="icon-btn" id="settingsBtn" title="Settings">⚙️</button>
+</header>
+
+<main>
+  <!-- PAGE 1: FEEDBACK ANALYZER -->
+  <section class="page" id="page-feedback">
+    <h1 class="page-title" data-i18n="title_feedback">Facebook Feedback Analyzer</h1>
+    <p class="subtitle" data-i18n="sub_feedback">Bring in player comments, let AI sort and read them, and get a clean report you can export.</p>
+
+    <div class="card">
+      <h2><span class="badge-num">1</span> <span data-i18n="c1_h">Bring in feedback</span></h2>
+      <p class="hint" id="c1Hint">Upload your exported comments, or pull from your own Facebook post.</p>
+      <div class="tabs">
+        <div class="tab active" data-tab="upload" data-i18n="tab_upload">📄 Upload file</div>
+        <div class="tab" data-tab="fb" data-i18n="tab_fb">🔗 Facebook link</div>
+      </div>
+
+      <div class="tabpane active" data-pane="upload">
+        <div class="drop" id="drop">
+          <div style="font-size:26px;margin-bottom:6px;">⬆️</div>
+          <strong id="dropMain">Click or drop a file</strong><br />
+          <span class="muted" id="dropSub"></span>
+        </div>
+        <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" style="display:none" />
+      </div>
+
+      <div class="tabpane" data-pane="fb">
+        <label class="fld" data-i18n="fb_label">Facebook post URL (a page you admin)</label>
+        <input type="text" id="fbUrl" placeholder="https://www.facebook.com/YourPage/posts/123..." />
+        <p class="muted" id="fbHint" style="margin-top:10px;"></p>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn primary" id="loadBtn" data-i18n="btn_load">Load feedback →</button>
+        <button class="btn ghost" id="sampleBtn" data-i18n="btn_sample">Try sample data</button>
+      </div>
+    </div>
+
+    <div class="card" id="tableCard" style="display:none">
+      <h2><span class="badge-num">2</span> <span data-i18n="c2_h">Feedback information</span> <span class="muted" style="font-weight:500" id="cleanNote"></span></h2>
+      <p class="hint" data-i18n="c2_hint">Cleaned and de-duplicated, ready to analyze.</p>
+      <div class="kpis" id="loadKpis"></div>
+      <div class="table-wrap" id="rawTableWrap"></div>
+      <div class="btn-row"><button class="btn primary" id="analyzeBtn" data-i18n="btn_analyze">🤖 Analyze with AI →</button></div>
+    </div>
+
+    <div class="card" id="classCard" style="display:none">
+      <h2><span class="badge-num">3</span> <span data-i18n="c3_h">AI classification</span></h2>
+      <p class="hint" data-i18n="c3_hint">Each comment tagged with sentiment and a topic category.</p>
+      <div class="table-wrap" id="classTableWrap"></div>
+    </div>
+
+    <div class="card" id="insightCard" style="display:none">
+      <h2><span class="badge-num">4</span> <span data-i18n="c4_h">Insight summary</span></h2>
+      <p class="hint" data-i18n="c4_hint">The story behind the numbers, in plain language.</p>
+      <div class="summary-text" id="insightBox"></div>
+    </div>
+
+    <div class="card" id="reportCard" style="display:none">
+      <h2><span class="badge-num">5</span> <span data-i18n="c5_h">Short report</span></h2>
+      <div class="kpis" id="reportKpis"></div>
+      <div class="charts">
+        <div class="chart-box"><h3 data-i18n="chart_sent">Sentiment breakdown</h3><canvas id="sentChart"></canvas></div>
+        <div class="chart-box"><h3 data-i18n="chart_cat">Top categories</h3><canvas id="catChart"></canvas></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn ghost" id="expDoc" data-i18n="exp_doc">📝 Export Doc</button>
+        <button class="btn ghost" id="expSheet" data-i18n="exp_sheet">📊 Export Sheets (.xlsx)</button>
+        <button class="btn ghost" id="expCsv" data-i18n="exp_csv">📋 Export CSV</button>
+        <button class="btn ghost" id="expPdf" data-i18n="exp_pdf">📄 Export PDF</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="page" id="page-page2">
+    <h1 class="page-title" data-i18n="nav_page2">Page Two</h1>
+    <div class="card"><div class="placeholder-page"><div class="big">🧩</div><strong data-i18n="soon">Coming next</strong><p class="muted" data-i18n="soon2">We'll build this together after the Feedback Analyzer is signed off.</p></div></div>
+  </section>
+  <section class="page" id="page-page3">
+    <h1 class="page-title" data-i18n="nav_page3">Page Three</h1>
+    <div class="card"><div class="placeholder-page"><div class="big">🚀</div><strong data-i18n="soon">Coming next</strong><p class="muted" data-i18n="soon3">Reserved for the third tool.</p></div></div>
+  </section>
+</main>
+
+<div class="modal-bg" id="settingsModal">
+  <div class="modal">
+    <h2 data-i18n="set_h">⚙️ Settings</h2>
+    <p class="muted" id="setNote" style="margin-top:2px"></p>
+    <label class="fld" id="setKeyLabel">Groq API key</label>
+    <input type="password" id="geminiKey" placeholder="gsk_..." />
+    <label class="fld" data-i18n="set_model">AI model</label>
+    <select id="geminiModel">
+      <option value="llama-3.3-70b-versatile">Llama 3.3 70B (recommended, smart & free)</option>
+      <option value="llama-3.1-8b-instant">Llama 3.1 8B (fastest)</option>
+      <option value="gemma2-9b-it">Gemma 2 9B</option>
+    </select>
+    <label class="fld" id="setCatLabel">Categories the AI sorts into</label>
+    <textarea id="catList" style="min-height:80px"></textarea>
+    <label class="fld" id="setFbLabel">Facebook access token (optional)</label>
+    <input type="password" id="fbToken" placeholder="EAAB..." />
+    <div class="btn-row">
+      <button class="btn primary" id="saveSettings" data-i18n="btn_save">Save</button>
+      <button class="btn ghost" id="closeSettings" data-i18n="btn_close">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===================== i18n ===================== */
+const T = {
+  en: {
+    nav_feedback:"Feedback Analyzer", nav_page2:"Page Two", nav_page3:"Page Three",
+    title_feedback:"Facebook Feedback Analyzer",
+    sub_feedback:"Bring in player comments, let AI sort and read them, and get a clean report you can export.",
+    c1_h:"Bring in feedback",
+    c1_hint:"Upload your exported comments, or pull from your own Facebook post.",
+    tab_upload:"📄 Upload file", tab_fb:"🔗 Facebook link",
+    drop_main:"Click or drop a file",
+    drop_sub:'CSV or Excel (.xlsx). A column named <code class="k">comment</code>, <code class="k">message</code> or <code class="k">text</code> is detected automatically.',
+    fb_label:"Facebook post URL (a page you admin)",
+    fb_hint:'Live pull only works for posts on a Page you manage and needs an access token (add it in the settings menu). For any other post, export the comments and use <strong>Upload file</strong> — that always works.',
+    btn_load:"Load feedback →", btn_sample:"Try sample data",
+    c2_h:"Feedback information", c2_hint:"Cleaned and de-duplicated, ready to analyze.",
+    btn_analyze:"🤖 Analyze with AI →",
+    c3_h:"AI classification", c3_hint:"Each comment tagged with sentiment and a topic category.",
+    c4_h:"Insight summary", c4_hint:"The story behind the numbers, in plain language.",
+    c5_h:"Short report",
+    chart_sent:"Sentiment breakdown", chart_cat:"Top categories",
+    exp_doc:"📝 Export Doc", exp_sheet:"📊 Export Sheets (.xlsx)", exp_csv:"📋 Export CSV", exp_pdf:"📄 Export PDF",
+    soon:"Coming next", soon2:"We'll build this together after the Feedback Analyzer is signed off.", soon3:"Reserved for the third tool.",
+    set_h:"⚙️ Settings", set_note:"Saved only in this browser. Never uploaded to GitHub.",
+    set_key:"Groq API key — free, no billing, at console.groq.com/keys",
+    set_model:"AI model", set_cat:"Categories the AI sorts into (comma-separated, editable)",
+    set_fb:"Facebook access token (optional — only for live pull of your own Page)",
+    btn_save:"Save", btn_close:"Close",
+    th_num:"#", th_author:"Author", th_date:"Date", th_comment:"Comment", th_sentiment:"Sentiment", th_category:"Category", th_theme:"Theme",
+    kpi_ready:"Comments ready", kpi_total:"Total analyzed", kpi_positive:"Positive", kpi_negative:"Negative comments", kpi_cats:"Categories seen",
+    sent_Positive:"Positive", sent_Neutral:"Neutral", sent_Negative:"Negative",
+    kept:"kept", removed:"duplicates/blanks removed",
+    t_file_ready:"File loaded — click \"Load feedback\"", t_choose:"Choose a file first", t_none:"No usable comments found",
+    t_need_key:"Add your free Groq API key in the settings menu first", t_done:"Analysis complete ✓", t_saved:"Settings saved ✓",
+    t_fburl:"Paste a Facebook post URL", t_fbtoken:"Add a Page access token in the settings menu, or use Upload instead",
+    t_fbcontact:"Contacting Facebook…", t_fbid:"Could not read a post ID — use Upload instead",
+    t_fbblock:"Live pull blocked (token/permissions) — please use Upload", t_writing:"Writing summary…",
+    exp_done:"Exported ✓", report_title:"TOSM Extreme — Player Feedback Report", gen:"Generated", analyzed:"comments analyzed",
+    r_sentiment:"Sentiment", r_categories:"Categories", r_examples:"Example comments"
+  },
+  th: {
+    nav_feedback:"วิเคราะห์ฟีดแบ็ก", nav_page2:"หน้าสอง", nav_page3:"หน้าสาม",
+    title_feedback:"ตัววิเคราะห์ฟีดแบ็กจาก Facebook",
+    sub_feedback:"นำคอมเมนต์ของผู้เล่นเข้ามา ให้ AI จัดหมวดและอ่านให้ แล้วได้รายงานที่ส่งออกได้",
+    c1_h:"นำเข้าฟีดแบ็ก",
+    c1_hint:"อัปโหลดไฟล์คอมเมนต์ที่ส่งออกมา หรือดึงจากโพสต์ Facebook ของคุณเอง",
+    tab_upload:"📄 อัปโหลดไฟล์", tab_fb:"🔗 ลิงก์ Facebook",
+    drop_main:"คลิกหรือวางไฟล์ที่นี่",
+    drop_sub:'ไฟล์ CSV หรือ Excel (.xlsx) ระบบจะใช้คอลัมน์ชื่อ <code class="k">comment</code>, <code class="k">message</code> หรือ <code class="k">text</code> โดยอัตโนมัติ',
+    fb_label:"ลิงก์โพสต์ Facebook (เพจที่คุณเป็นแอดมิน)",
+    fb_hint:'ดึงสดได้เฉพาะโพสต์ในเพจที่คุณดูแล และต้องมีโทเคน (เพิ่มในเมนูตั้งค่า) สำหรับโพสต์อื่น ให้ส่งออกคอมเมนต์แล้วใช้ <strong>อัปโหลดไฟล์</strong> ซึ่งใช้ได้เสมอ',
+    btn_load:"โหลดฟีดแบ็ก →", btn_sample:"ลองข้อมูลตัวอย่าง",
+    c2_h:"ข้อมูลฟีดแบ็ก", c2_hint:"ทำความสะอาดและตัดรายการซ้ำแล้ว พร้อมวิเคราะห์",
+    btn_analyze:"🤖 วิเคราะห์ด้วย AI →",
+    c3_h:"การจัดหมวดด้วย AI", c3_hint:"แต่ละคอมเมนต์ถูกติดป้ายอารมณ์และหมวดหมู่",
+    c4_h:"สรุปเชิงลึก", c4_hint:"เรื่องราวเบื้องหลังตัวเลข อธิบายแบบเข้าใจง่าย",
+    c5_h:"รายงานสรุป",
+    chart_sent:"สัดส่วนอารมณ์", chart_cat:"หมวดหมู่ยอดนิยม",
+    exp_doc:"📝 ส่งออก Doc", exp_sheet:"📊 ส่งออก Sheets (.xlsx)", exp_csv:"📋 ส่งออก CSV", exp_pdf:"📄 ส่งออก PDF",
+    soon:"เร็ว ๆ นี้", soon2:"เราจะสร้างหน้านี้ด้วยกันหลังจากหน้าวิเคราะห์ฟีดแบ็กเสร็จเรียบร้อย", soon3:"สำรองไว้สำหรับเครื่องมือที่สาม",
+    set_h:"⚙️ ตั้งค่า", set_note:"บันทึกในเบราว์เซอร์นี้เท่านั้น ไม่ถูกอัปโหลดขึ้น GitHub",
+    set_key:"คีย์ Groq API — ฟรี ไม่ต้องผูกบัตร ที่ console.groq.com/keys",
+    set_model:"โมเดล AI", set_cat:"หมวดหมู่ที่ให้ AI จัด (คั่นด้วยจุลภาค แก้ไขได้)",
+    set_fb:"โทเคน Facebook (ไม่บังคับ — ใช้สำหรับดึงสดจากเพจของคุณเองเท่านั้น)",
+    btn_save:"บันทึก", btn_close:"ปิด",
+    th_num:"ลำดับ", th_author:"ผู้เขียน", th_date:"วันที่", th_comment:"คอมเมนต์", th_sentiment:"อารมณ์", th_category:"หมวดหมู่", th_theme:"ประเด็น",
+    kpi_ready:"คอมเมนต์พร้อมใช้", kpi_total:"วิเคราะห์ทั้งหมด", kpi_positive:"เชิงบวก", kpi_negative:"คอมเมนต์เชิงลบ", kpi_cats:"จำนวนหมวดหมู่",
+    sent_Positive:"เชิงบวก", sent_Neutral:"กลาง", sent_Negative:"เชิงลบ",
+    kept:"รายการที่เก็บไว้", removed:"รายการซ้ำ/ว่างถูกตัดออก",
+    t_file_ready:"โหลดไฟล์แล้ว — กด \"โหลดฟีดแบ็ก\"", t_choose:"เลือกไฟล์ก่อน", t_none:"ไม่พบคอมเมนต์ที่ใช้ได้",
+    t_need_key:"เพิ่มคีย์ Groq API (ฟรี) ในเมนูตั้งค่าก่อน", t_done:"วิเคราะห์เสร็จแล้ว ✓", t_saved:"บันทึกการตั้งค่าแล้ว ✓",
+    t_fburl:"วางลิงก์โพสต์ Facebook", t_fbtoken:"เพิ่มโทเคนในเมนูตั้งค่า หรือใช้การอัปโหลดแทน",
+    t_fbcontact:"กำลังติดต่อ Facebook…", t_fbid:"อ่านรหัสโพสต์ไม่ได้ — ใช้การอัปโหลดแทน",
+    t_fbblock:"ดึงสดถูกบล็อก (โทเคน/สิทธิ์) — กรุณาใช้การอัปโหลด", t_writing:"กำลังเขียนสรุป…",
+    exp_done:"ส่งออกแล้ว ✓", report_title:"TOSM Extreme — รายงานฟีดแบ็กผู้เล่น", gen:"สร้างเมื่อ", analyzed:"คอมเมนต์ที่วิเคราะห์",
+    r_sentiment:"อารมณ์", r_categories:"หมวดหมู่", r_examples:"ตัวอย่างคอมเมนต์"
+  }
+};
+let LANG = localStorage.getItem('pih_lang') || 'en';
+function t(k){ return (T[LANG] && T[LANG][k]!==undefined) ? T[LANG][k] : (T.en[k]!==undefined?T.en[k]:k); }
+function sentLabel(s){ return t('sent_'+s); }
+
+function applyLang(lang){
+  LANG = lang; localStorage.setItem('pih_lang', lang); document.documentElement.lang = lang;
+  document.querySelectorAll('[data-i18n]').forEach(el=> el.textContent = t(el.dataset.i18n));
+  document.getElementById('dropSub').innerHTML = t('drop_sub');
+  document.getElementById('fbHint').innerHTML = t('fb_hint');
+  document.getElementById('c1Hint').textContent = t('c1_hint');
+  if(!fileLoadedName) document.getElementById('dropMain').textContent = t('drop_main');
+  document.getElementById('setNote').textContent = t('set_note');
+  document.getElementById('setKeyLabel').textContent = t('set_key');
+  document.getElementById('setCatLabel').textContent = t('set_cat');
+  document.getElementById('setFbLabel').textContent = t('set_fb');
+  document.getElementById('langBtn').textContent = lang==='en' ? 'ไทย' : 'EN';
+  if(state.rows.length){ renderRawTable(); updateCleanNote(); }
+  if(state.classified.length){ renderClass(); renderReport(); }
+}
+
+/* ===================== store / state ===================== */
+const DEFAULT_CATS = ["Bug / Technical Issue","Gameplay / Balance","Content Request","Praise / Positive","Monetization / Pricing","UI / UX","Event Feedback","Other"];
+const store = {
+  get key()   { return localStorage.getItem('pih_gemini_key') || ''; },
+  get model() { const m = localStorage.getItem('pih_gemini_model'); const ok = ['llama-3.3-70b-versatile','llama-3.1-8b-instant','gemma2-9b-it']; return ok.includes(m) ? m : 'llama-3.3-70b-versatile'; },
+  get cats()  { const c = localStorage.getItem('pih_cats'); return c ? c.split(',').map(s=>s.trim()).filter(Boolean) : DEFAULT_CATS.slice(); },
+  get fbToken(){ return localStorage.getItem('pih_fb_token') || ''; },
+  get theme() { return localStorage.getItem('pih_theme') || 'light'; },
+};
+let state = { rows: [], classified: [], insight: '', counts: {}, dropped: 0 };
+let fileLoadedName = '';
+
+/* ===================== toast ===================== */
+let toastT;
+function toast(msg){ const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove('show'),2800); }
+
+/* ===================== theme ===================== */
+function applyTheme(th){ document.documentElement.setAttribute('data-theme',th); document.getElementById('themeBtn').textContent = th==='dark'?'☀️':'🌙'; localStorage.setItem('pih_theme',th); if(state.classified.length) renderReport(); }
+document.getElementById('themeBtn').onclick = ()=> applyTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark');
+document.getElementById('langBtn').onclick = ()=> applyLang(LANG==='en'?'th':'en');
+
+/* ===================== router ===================== */
+function route(){
+  const r = (location.hash.replace('#/','') || 'feedback');
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  (document.getElementById('page-'+r) || document.getElementById('page-feedback')).classList.add('active');
+  document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('active', a.dataset.route===r));
+}
+window.addEventListener('hashchange', route);
+
+/* ===================== settings ===================== */
+const sm = document.getElementById('settingsModal');
+function openSettings(){
+  document.getElementById('geminiKey').value = store.key;
+  document.getElementById('geminiModel').value = store.model;
+  document.getElementById('catList').value = store.cats.join(', ');
+  document.getElementById('fbToken').value = store.fbToken;
+  sm.classList.add('show');
+}
+document.getElementById('settingsBtn').onclick = openSettings;
+document.getElementById('closeSettings').onclick = ()=> sm.classList.remove('show');
+sm.onclick = e=>{ if(e.target===sm) sm.classList.remove('show'); };
+document.getElementById('saveSettings').onclick = ()=>{
+  localStorage.setItem('pih_gemini_key', document.getElementById('geminiKey').value.trim());
+  localStorage.setItem('pih_gemini_model', document.getElementById('geminiModel').value);
+  localStorage.setItem('pih_cats', document.getElementById('catList').value);
+  localStorage.setItem('pih_fb_token', document.getElementById('fbToken').value.trim());
+  sm.classList.remove('show'); toast(t('t_saved'));
+};
+
+/* ===================== input tabs ===================== */
+document.querySelectorAll('.tab').forEach(tb=> tb.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.tabpane').forEach(x=>x.classList.remove('active'));
+  tb.classList.add('active');
+  document.querySelector('[data-pane="'+tb.dataset.tab+'"]').classList.add('active');
+});
+
+/* ===================== file upload ===================== */
+const drop = document.getElementById('drop'), fileInput = document.getElementById('fileInput');
+drop.onclick = ()=> fileInput.click();
+['dragover','dragenter'].forEach(ev=> drop.addEventListener(ev, e=>{e.preventDefault(); drop.classList.add('over');}));
+['dragleave','drop'].forEach(ev=> drop.addEventListener(ev, e=>{e.preventDefault(); drop.classList.remove('over');}));
+drop.addEventListener('drop', e=>{ if(e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); });
+fileInput.onchange = e=>{ if(e.target.files.length) handleFile(e.target.files[0]); };
+
+let pendingFileRows = null;
+function handleFile(file){
+  const ext = file.name.split('.').pop().toLowerCase();
+  const reader = new FileReader();
+  reader.onload = e=>{
+    try {
+      let records = [];
+      if(ext==='csv'){
+        const parsed = Papa.parse(e.target.result, {header:true, skipEmptyLines:true});
+        records = parsed.data;
+        if(!records.length || Object.keys(records[0]||{}).length<=1)
+          records = Papa.parse(e.target.result,{skipEmptyLines:true}).data.map(r=>({comment:r[0]}));
+      } else {
+        const wb = XLSX.read(e.target.result, {type:'binary'});
+        records = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+      }
+      pendingFileRows = records; fileLoadedName = file.name;
+      document.getElementById('dropMain').textContent = '✓ ' + file.name;
+      toast(t('t_file_ready'));
+    } catch(err){ toast('⚠ '+err.message); }
+  };
+  if(ext==='csv') reader.readAsText(file); else reader.readAsBinaryString(file);
+}
+
+/* ===================== normalize / clean ===================== */
+function pickComment(obj){
+  if(typeof obj === 'string') return obj;
+  const keys = Object.keys(obj);
+  const pref = ['comment','message','text','feedback','content','body','comments'];
+  for(const p of pref){ const k = keys.find(k=>k.toLowerCase().trim()===p); if(k && obj[k]) return String(obj[k]); }
+  for(const k of keys){ if(obj[k] && String(obj[k]).trim().length>3) return String(obj[k]); }
+  return '';
+}
+function pickField(obj, names){
+  if(typeof obj!=='object'||!obj) return '';
+  const keys=Object.keys(obj);
+  for(const n of names){ const k=keys.find(k=>k.toLowerCase().trim()===n); if(k&&obj[k]) return String(obj[k]); }
+  return '';
+}
+function cleanText(s){ return String(s||'').replace(/\s+/g,' ').trim(); }
+function buildRows(records){
+  const seen = new Set(); const rows = []; let dropped = 0;
+  records.forEach(rec=>{
+    const c = cleanText(pickComment(rec));
+    if(!c || c.length<2){ dropped++; return; }
+    const norm = c.toLowerCase();
+    if(seen.has(norm)){ dropped++; return; }
+    seen.add(norm);
+    rows.push({ id: rows.length+1,
+      author: cleanText(pickField(rec,['author','name','user','from','username'])) || '—',
+      date: cleanText(pickField(rec,['date','time','created_time','timestamp','created'])) || '—',
+      comment: c });
+  });
+  return { rows, dropped };
+}
+
+/* ===================== load ===================== */
+document.getElementById('loadBtn').onclick = ()=>{
+  const activeTab = document.querySelector('.tab.active').dataset.tab;
+  if(activeTab==='upload'){
+    if(!pendingFileRows){ toast(t('t_choose')); return; }
+    finalizeLoad(buildRows(pendingFileRows));
+  } else { pullFromFacebook(); }
+};
+document.getElementById('sampleBtn').onclick = ()=> finalizeLoad(buildRows(SAMPLE));
+
+function finalizeLoad({rows, dropped}){
+  if(!rows.length){ toast(t('t_none')); return; }
+  state.rows = rows; state.dropped = dropped; state.classified=[]; state.insight=''; state.counts={};
+  updateCleanNote(); renderRawTable();
+  document.getElementById('tableCard').style.display='block';
+  ['classCard','insightCard','reportCard'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('tableCard').scrollIntoView({behavior:'smooth'});
+}
+function updateCleanNote(){
+  document.getElementById('cleanNote').textContent =
+    `· ${state.rows.length} ${t('kept')}` + (state.dropped?`, ${state.dropped} ${t('removed')}`:'');
+}
+function renderRawTable(){
+  document.getElementById('loadKpis').innerHTML =
+    `<div class="kpi"><div class="num">${state.rows.length}</div><div class="lbl">${t('kpi_ready')}</div></div>`;
+  let html = `<table><thead><tr><th>${t('th_num')}</th><th>${t('th_author')}</th><th>${t('th_date')}</th><th>${t('th_comment')}</th></tr></thead><tbody>`;
+  state.rows.forEach(r=> html += `<tr><td>${r.id}</td><td>${esc(r.author)}</td><td>${esc(r.date)}</td><td class="comment">${esc(r.comment)}</td></tr>`);
+  document.getElementById('rawTableWrap').innerHTML = html + '</tbody></table>';
+}
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* ===================== Facebook live pull ===================== */
+async function pullFromFacebook(){
+  const url = document.getElementById('fbUrl').value.trim();
+  const token = store.fbToken;
+  if(!url){ toast(t('t_fburl')); return; }
+  if(!token){ toast(t('t_fbtoken')); openSettings(); return; }
+  const idMatch = url.match(/posts\/(\d+)/) || url.match(/(\d{8,})/);
+  if(!idMatch){ toast(t('t_fbid')); return; }
+  const postId = idMatch[1];
+  toast(t('t_fbcontact'));
+  try{
+    const api = `https://graph.facebook.com/v19.0/${postId}/comments?fields=from,message,created_time&limit=300&access_token=${encodeURIComponent(token)}`;
+    const res = await fetch(api); const data = await res.json();
+    if(data.error){ toast('Facebook: '+data.error.message); return; }
+    const recs = (data.data||[]).map(c=>({comment:c.message, author:(c.from&&c.from.name)||'—', date:c.created_time}));
+    if(!recs.length){ toast(t('t_none')); return; }
+    finalizeLoad(buildRows(recs));
+  }catch(err){ toast(t('t_fbblock')); }
+}
+
+/* ===================== AI: Gemini ===================== */
+document.getElementById('analyzeBtn').onclick = analyze;
+async function analyze(){
+  if(!store.key){ toast(t('t_need_key')); openSettings(); return; }
+  const btn = document.getElementById('analyzeBtn'); btn.disabled = true; const orig = btn.innerHTML;
+  try{
+    const cats = store.cats; const batchSize = 40; const results = [];
+    for(let i=0; i<state.rows.length; i+=batchSize){
+      const batch = state.rows.slice(i, i+batchSize);
+      btn.innerHTML = `<span class="spin"></span> ${Math.min(i+batchSize,state.rows.length)}/${state.rows.length}…`;
+      results.push(...await classifyBatch(batch, cats));
+    }
+    state.classified = state.rows.map((r,idx)=>{
+      const found = results.find(x=>x && x.id===r.id) || results[idx] || {};
+      return { ...r, sentiment: normSent(found.sentiment),
+        category: cats.includes(found.category)? found.category : (cats[cats.length-1]||'Other'),
+        theme: found.theme || '' };
+    });
+    computeCounts(); renderClass(); renderReport();
+    btn.innerHTML = `<span class="spin"></span> ${t('t_writing')}`;
+    state.insight = await summarize(); renderInsight();
+    ['classCard','insightCard','reportCard'].forEach(id=>document.getElementById(id).style.display='block');
+    document.getElementById('classCard').scrollIntoView({behavior:'smooth'});
+    toast(t('t_done'));
+  }catch(err){ toast('AI: '+err.message); console.error(err); }
+  finally{ btn.disabled=false; btn.innerHTML=orig; }
+}
+function normSent(s){ s=(s||'').toLowerCase(); if(s.startsWith('pos'))return'Positive'; if(s.startsWith('neg'))return'Negative'; return'Neutral'; }
+async function aiCall(prompt){
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+store.key },
+    body: JSON.stringify({ model: store.model, temperature:0.2, messages:[{ role:'user', content:prompt }] })
+  });
+  const data = await res.json();
+  if(data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+  return data.choices?.[0]?.message?.content || '';
+}
+async function classifyBatch(batch, cats){
+  const langName = LANG==='th'?'Thai':'English';
+  const list = batch.map(r=>`${r.id}. ${r.comment}`).join('\n');
+  const prompt =
+`You are a game-community analyst for the mobile game "TOSM Extreme".
+Classify each player comment below (comments may be in Thai or English).
+sentiment: exactly one of Positive, Neutral, Negative (English).
+category: exactly one of: ${cats.join(' | ')} (use the exact text given).
+theme: a very short 2-4 word phrase written in ${langName}.
+Return ONLY a JSON array, no markdown:
+[{"id":1,"sentiment":"Positive","category":"Event Feedback","theme":"..."}]
+
+Comments:
+${list}`;
+  return parseJsonArray(await aiCall(prompt));
+}
+function parseJsonArray(raw){
+  let x = raw.trim().replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
+  const s=x.indexOf('['), e=x.lastIndexOf(']'); if(s>=0&&e>=0) x=x.slice(s,e+1);
+  try{ return JSON.parse(x); }catch(_){ return []; }
+}
+async function summarize(){
+  const langName = LANG==='th'?'Thai':'English';
+  const {sent,cat}=state.counts;
+  const top = Object.entries(cat).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>`${k}: ${v}`).join(', ');
+  const sampleNeg = state.classified.filter(c=>c.sentiment==='Negative').slice(0,14).map(c=>'- '+c.comment).join('\n');
+  const samplePos = state.classified.filter(c=>c.sentiment==='Positive').slice(0,8).map(c=>'- '+c.comment).join('\n');
+  const prompt =
+`Summarize player feedback for the game "TOSM Extreme" for a non-technical event planner.
+Totals — Positive: ${sent.Positive||0}, Neutral: ${sent.Neutral||0}, Negative: ${sent.Negative||0}.
+Top categories: ${top}.
+Negative samples:\n${sampleNeg}\nPositive samples:\n${samplePos}
+
+Write the ENTIRE summary in ${langName}, as clean HTML (no markdown, no <html> tag):
+<p> 2-3 sentence overview of overall mood.
+<h4>(love)</h4><ul>...</ul>
+<h4>(concerns)</h4><ul>...</ul>
+<h4>(recommended actions)</h4><ul>...</ul>
+Use real headings translated into ${langName}. Keep it short and practical.`;
+  return (await aiCall(prompt)).replace(/```html/gi,'').replace(/```/g,'').trim();
+}
+
+/* ===================== counts / render ===================== */
+function computeCounts(){
+  const sent={Positive:0,Neutral:0,Negative:0}, cat={};
+  state.classified.forEach(c=>{ sent[c.sentiment]=(sent[c.sentiment]||0)+1; cat[c.category]=(cat[c.category]||0)+1; });
+  state.counts={sent,cat};
+}
+function renderClass(){
+  let html=`<table><thead><tr><th>${t('th_num')}</th><th>${t('th_comment')}</th><th>${t('th_sentiment')}</th><th>${t('th_category')}</th><th>${t('th_theme')}</th></tr></thead><tbody>`;
+  state.classified.forEach(c=>{
+    const cls = c.sentiment==='Positive'?'pos':c.sentiment==='Negative'?'neg':'neu';
+    html+=`<tr><td>${c.id}</td><td class="comment">${esc(c.comment)}</td>
+      <td><span class="pill ${cls}">${sentLabel(c.sentiment)}</span></td>
+      <td><span class="pill cat">${esc(c.category)}</span></td>
+      <td class="muted">${esc(c.theme||'')}</td></tr>`;
+  });
+  document.getElementById('classTableWrap').innerHTML = html+'</tbody></table>';
+}
+let sentChart, catChart;
+function renderReport(){
+  const {sent,cat}=state.counts; const total=state.classified.length; if(!total) return;
+  const posPct = Math.round((sent.Positive/total)*100);
+  document.getElementById('reportKpis').innerHTML =
+    `<div class="kpi"><div class="num">${total}</div><div class="lbl">${t('kpi_total')}</div></div>
+     <div class="kpi"><div class="num" style="color:var(--pos)">${posPct}%</div><div class="lbl">${t('kpi_positive')}</div></div>
+     <div class="kpi"><div class="num" style="color:var(--neg)">${sent.Negative||0}</div><div class="lbl">${t('kpi_negative')}</div></div>
+     <div class="kpi"><div class="num">${Object.keys(cat).length}</div><div class="lbl">${t('kpi_cats')}</div></div>`;
+  Chart.defaults.color = getComputedStyle(document.body).getPropertyValue('--text');
+  if(sentChart) sentChart.destroy(); if(catChart) catChart.destroy();
+  sentChart = new Chart(document.getElementById('sentChart'), { type:'pie',
+    data:{ labels:[sentLabel('Positive'),sentLabel('Neutral'),sentLabel('Negative')],
+      datasets:[{ data:[sent.Positive||0,sent.Neutral||0,sent.Negative||0], backgroundColor:['#1faa72','#c9912a','#e0544b'], borderWidth:0 }] },
+    options:{ plugins:{legend:{position:'bottom'}} } });
+  const ce = Object.entries(cat).sort((a,b)=>b[1]-a[1]);
+  const palette=['#4f6ef7','#7c5cff','#1faa72','#e0544b','#c9912a','#2bb1c9','#e07ab0','#7a8699'];
+  catChart = new Chart(document.getElementById('catChart'), { type:'doughnut',
+    data:{ labels:ce.map(e=>e[0]), datasets:[{ data:ce.map(e=>e[1]), backgroundColor:palette, borderWidth:0 }] },
+    options:{ plugins:{legend:{position:'bottom'}} } });
+}
+function renderInsight(){ document.getElementById('insightBox').innerHTML = state.insight || '<p class="muted">—</p>'; }
+
+/* ===================== exports ===================== */
+function classRowsForExport(){
+  return state.classified.map(c=>({ '#':c.id, [t('th_author')]:c.author, [t('th_date')]:c.date,
+    [t('th_comment')]:c.comment, [t('th_sentiment')]:sentLabel(c.sentiment), [t('th_category')]:c.category, [t('th_theme')]:c.theme }));
+}
+function summaryAOA(){
+  const {sent,cat}=state.counts; const rows=[[t('r_sentiment'),'Count']];
+  ['Positive','Neutral','Negative'].forEach(k=>rows.push([sentLabel(k), sent[k]||0]));
+  rows.push([]); rows.push([t('r_categories'),'Count']);
+  Object.entries(cat).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>rows.push([k,v]));
+  return rows;
+}
+function ts(){ return new Date().toISOString().slice(0,10); }
+
+document.getElementById('expSheet').onclick = ()=>{
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(classRowsForExport()), 'Feedback');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(summaryAOA()), 'Summary');
+  XLSX.writeFile(wb, `TOSM_Feedback_${ts()}.xlsx`); toast(t('exp_done'));
+};
+document.getElementById('expCsv').onclick = ()=>{
+  const csv = '﻿' + XLSX.utils.sheet_to_csv(XLSX.utils.json_to_sheet(classRowsForExport()));
+  downloadBlob(new Blob([csv],{type:'text/csv;charset=utf-8'}), `TOSM_Feedback_${ts()}.csv`); toast(t('exp_done'));
+};
+document.getElementById('expDoc').onclick = ()=>{
+  const {sent,cat}=state.counts;
+  const rows = state.classified.map(c=>`<tr><td>${c.id}</td><td>${esc(c.comment)}</td><td>${sentLabel(c.sentiment)}</td><td>${esc(c.category)}</td></tr>`).join('');
+  const html =
+`<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word'><head><meta charset='utf-8'><title>${t('report_title')}</title></head>
+<body style="font-family:'Sarabun',Calibri,Arial">
+<h1>${t('report_title')}</h1>
+<p>${t('gen')} ${new Date().toLocaleString()} · ${state.classified.length} ${t('analyzed')}</p>
+<h2>${t('c4_h')}</h2>${state.insight}
+<h2>${t('r_sentiment')}</h2><p>${sentLabel('Positive')}: ${sent.Positive||0} &nbsp; ${sentLabel('Neutral')}: ${sent.Neutral||0} &nbsp; ${sentLabel('Negative')}: ${sent.Negative||0}</p>
+<h2>${t('r_categories')}</h2><ul>${Object.entries(cat).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<li>${esc(k)}: ${v}</li>`).join('')}</ul>
+<h2>${t('th_comment')}</h2>
+<table border='1' cellspacing='0' cellpadding='5' style="border-collapse:collapse;font-size:11px">
+<tr style="background:#eee"><th>#</th><th>${t('th_comment')}</th><th>${t('th_sentiment')}</th><th>${t('th_category')}</th></tr>${rows}</table>
+</body></html>`;
+  downloadBlob(new Blob(['﻿'+html],{type:'application/msword'}), `TOSM_Feedback_${ts()}.doc`); toast(t('exp_done'));
+};
+
+/* PDF via html2canvas so Thai renders correctly */
+document.getElementById('expPdf').onclick = async ()=>{
+  const btn = document.getElementById('expPdf'); const o=btn.innerHTML; btn.innerHTML='<span class="spin"></span>';
+  try{
+    const node = buildPdfNode(); document.body.appendChild(node);
+    const canvas = await html2canvas(node, {scale:2, backgroundColor:'#ffffff'});
+    document.body.removeChild(node);
+    const { jsPDF } = window.jspdf; const pdf = new jsPDF('p','mm','a4');
+    const pw=210, ph=297, imgW=pw, imgH=canvas.height*imgW/canvas.width;
+    const img = canvas.toDataURL('image/jpeg',0.92);
+    let left=imgH, pos=0;
+    pdf.addImage(img,'JPEG',0,pos,imgW,imgH); left-=ph;
+    while(left>0){ pos-=ph; pdf.addPage(); pdf.addImage(img,'JPEG',0,pos,imgW,imgH); left-=ph; }
+    pdf.save(`TOSM_Feedback_${ts()}.pdf`); toast(t('exp_done'));
+  }catch(err){ toast('PDF: '+err.message); }
+  finally{ btn.innerHTML=o; }
+};
+function buildPdfNode(){
+  const {sent,cat}=state.counts; const total=state.classified.length;
+  const d=document.createElement('div');
+  d.style.cssText="width:760px;padding:34px;background:#fff;color:#1b2330;font-family:'Sarabun','Segoe UI',Arial;position:fixed;left:-9999px;top:0;";
+  let sImg='',cImg='';
+  try{ sImg=sentChart.toBase64Image(); cImg=catChart.toBase64Image(); }catch(_){}
+  const catRows = Object.entries(cat).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<li>${esc(k)}: <b>${v}</b></li>`).join('');
+  const ex = state.classified.filter(c=>c.sentiment==='Negative').slice(0,10)
+        .concat(state.classified.filter(c=>c.sentiment==='Positive').slice(0,6))
+        .map(c=>`<tr><td style="border:1px solid #ddd;padding:5px">${esc(c.comment)}</td><td style="border:1px solid #ddd;padding:5px;white-space:nowrap">${sentLabel(c.sentiment)}</td><td style="border:1px solid #ddd;padding:5px;white-space:nowrap">${esc(c.category)}</td></tr>`).join('');
+  d.innerHTML =
+    `<h1 style="margin:0 0 4px;color:#4f6ef7">${t('report_title')}</h1>
+     <p style="color:#666;margin:0 0 18px">${t('gen')} ${new Date().toLocaleString()} · ${total} ${t('analyzed')}</p>
+     <div style="display:flex;gap:24px;margin-bottom:18px">
+       <div style="flex:1"><h3 style="margin:0 0 6px">${t('chart_sent')}</h3>${sImg?`<img src="${sImg}" style="width:100%">`:''}</div>
+       <div style="flex:1"><h3 style="margin:0 0 6px">${t('chart_cat')}</h3>${cImg?`<img src="${cImg}" style="width:100%">`:''}</div>
+     </div>
+     <p><b>${sentLabel('Positive')}:</b> ${sent.Positive||0} &nbsp; <b>${sentLabel('Neutral')}:</b> ${sent.Neutral||0} &nbsp; <b>${sentLabel('Negative')}:</b> ${sent.Negative||0}</p>
+     <h2 style="color:#4f6ef7">${t('c4_h')}</h2>
+     <div style="font-size:14px;line-height:1.7">${state.insight}</div>
+     <h2 style="color:#4f6ef7">${t('r_categories')}</h2><ul>${catRows}</ul>
+     <h2 style="color:#4f6ef7">${t('r_examples')}</h2>
+     <table style="border-collapse:collapse;width:100%;font-size:12px">
+       <tr style="background:#eef"><th style="border:1px solid #ddd;padding:5px;text-align:left">${t('th_comment')}</th><th style="border:1px solid #ddd;padding:5px">${t('th_sentiment')}</th><th style="border:1px solid #ddd;padding:5px">${t('th_category')}</th></tr>
+       ${ex}
+     </table>`;
+  return d;
+}
+function downloadBlob(blob, name){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1500); }
+
+/* ===================== sample data ===================== */
+const SAMPLE = [
+  "The new Popo O Drop event is so much fun, best one yet!",
+  "Please fix the lag during the boss fight, it crashes every time on my phone.",
+  "Skins are way too expensive, 1500 gems is crazy.",
+  "Love the new map design, looks gorgeous 😍",
+  "Matchmaking is broken, I keep getting much higher level players.",
+  "อยากได้ภาษาไทยในเกมครับ",
+  "The reward announcement page is confusing, I couldn't find my prize.",
+  "Great update overall but the new UI buttons are too small.",
+  "Server keeps disconnecting me at peak hours.",
+  "ขอบคุณสำหรับของรางวัลล็อกอินฟรี ใจดีมากครับ",
+  "The event timer is wrong, it ended early for me.",
+  "Add more PvE content, the grind is boring.",
+  "Balance is off, the new character is way too strong.",
+  "Customer support never replied to my ticket about lost items.",
+  "กราฟิกสวยมาก เล่นลื่นบนมือถือเครื่องใหม่",
+  "Why did you nerf my favorite weapon? Please revert.",
+  "The community event was awesome, met so many new players!",
+  "โฆษณาเยอะเกินไปหลังจบแต่ละแมตช์ น่ารำคาญมาก",
+  "Tutorial is unclear for new players, my friend quit because of it.",
+  "Keep up the great work, this is my favorite mobile game!"
+];
+
+/* ===================== init ===================== */
+applyTheme(store.theme);
+applyLang(LANG);
+route();
+</script>
+</body>
+</html>
