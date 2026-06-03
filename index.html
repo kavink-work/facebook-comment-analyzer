@@ -246,7 +246,7 @@ const T={
   th_id:"ID",th_date:"Date",th_source:"Source",th_seg:"Segment",th_area:"Area",th_comment:"Feedback",th_sent:"Sentiment",th_cat:"Category",th_pri:"Priority",th_sum:"AI Summary",th_owner:"Owner",th_conf:"Conf.",
   kpi_ready:"Rows ready",kpi_total:"Total analyzed",kpi_neg:"Negative",kpi_high:"High priority",kpi_cats:"Categories",
   sent_Positive:"Positive",sent_Neutral:"Neutral",sent_Negative:"Negative",pri_High:"High",pri_Medium:"Medium",pri_Low:"Low",
-  kept:"kept",removed:"blank rows removed",cap:"(capped at 2,000)",
+  kept:"kept",removed:"blank / entry-code rows removed",cap:"(capped at 2,000)",
   t_file_ready:"File loaded — click \"Load data\"",t_choose:"Choose a file first",t_none:"No usable rows found",
   t_need_key:"Add your free Groq API key in ⚙️ Settings first",t_done:"Analysis complete ✓",t_saved:"Settings saved ✓",t_writing:"Writing summary…",
   t_testing:"Testing…",t_test_ok:"Connection OK ✓",exp_done:"Exported ✓",
@@ -280,7 +280,7 @@ const T={
   th_id:"รหัส",th_date:"วันที่",th_source:"แหล่ง",th_seg:"กลุ่ม",th_area:"ส่วนเกม",th_comment:"ฟีดแบ็ก",th_sent:"อารมณ์",th_cat:"หมวดหมู่",th_pri:"ความสำคัญ",th_sum:"สรุป AI",th_owner:"ทีม",th_conf:"มั่นใจ",
   kpi_ready:"แถวพร้อมใช้",kpi_total:"วิเคราะห์ทั้งหมด",kpi_neg:"เชิงลบ",kpi_high:"ความสำคัญสูง",kpi_cats:"หมวดหมู่",
   sent_Positive:"เชิงบวก",sent_Neutral:"กลาง",sent_Negative:"เชิงลบ",pri_High:"สูง",pri_Medium:"กลาง",pri_Low:"ต่ำ",
-  kept:"เก็บไว้",removed:"แถวว่างถูกตัด",cap:"(จำกัดที่ 2,000)",
+  kept:"เก็บไว้",removed:"แถวว่าง/โค้ดร่วมกิจกรรมถูกตัด",cap:"(จำกัดที่ 2,000)",
   t_file_ready:"โหลดไฟล์แล้ว — กด \"โหลดข้อมูล\"",t_choose:"เลือกไฟล์ก่อน",t_none:"ไม่พบแถวที่ใช้ได้",
   t_need_key:"เพิ่มคีย์ Groq API (ฟรี) ในเมนู ⚙️ ก่อน",t_done:"วิเคราะห์เสร็จแล้ว ✓",t_saved:"บันทึกแล้ว ✓",t_writing:"กำลังเขียนสรุป…",
   t_testing:"กำลังทดสอบ…",t_test_ok:"เชื่อมต่อสำเร็จ ✓",exp_done:"ส่งออกแล้ว ✓",
@@ -356,7 +356,14 @@ function handleFile(file){const ext=file.name.split('.').pop().toLowerCase();con
 /* ===== clean / map ===== */
 function gf(obj,names){if(typeof obj!=='object'||!obj)return '';const keys=Object.keys(obj);for(const n of names){const k=keys.find(k=>k.toLowerCase().trim().replace(/\s+/g,'_')===n);if(k&&obj[k]!=null&&String(obj[k]).trim())return String(obj[k]).trim();}return '';}
 function clean(s){return String(s||'').replace(/\s+/g,' ').trim();}
-function buildRows(recs){const rows=[];let dropped=0,capped=false;for(const rec of recs){const fb=clean(typeof rec==='string'?rec:gf(rec,['player_feedback','feedback','comment','message','text','content']));if(!fb||fb.length<2){dropped++;continue;}if(rows.length>=MAX_ROWS){capped=true;break;}rows.push({id:gf(rec,['feedback_id','id'])||('FB-'+String(rows.length+1).padStart(3,'0')),date:gf(rec,['date','created_time','time','timestamp']),source:gf(rec,['source','channel']),seg:gf(rec,['player_segment','segment']),area:gf(rec,['game_area','area']),comment:fb});}return{rows,dropped,capped};}
+/* Strip giveaway "AID" entry codes (Facebook event noise) so only real feedback remains. */
+function stripNoise(s){return String(s||'')
+  .replace(/A\s*I\s*[DM]\s*[:：]?\s*[A-Za-z0-9]{8,}/gi,' ')  /* AID: CODE / AIM CODE */
+  .replace(/\b[A-Z0-9]{18,}\b/g,' ')                        /* standalone long codes */
+  .replace(/\bAI[DM]\b/gi,' ')                              /* leftover AID/AIM token */
+  .replace(/\s+/g,' ').trim();}
+function hasContent(s){return s && s.replace(/[^\p{L}\p{N}]/gu,'').length>=2;}
+function buildRows(recs){const rows=[];let dropped=0,capped=false;for(const rec of recs){let fb=clean(typeof rec==='string'?rec:gf(rec,['player_feedback','feedback','comment','message','text','content']));fb=stripNoise(fb);if(!hasContent(fb)){dropped++;continue;}if(rows.length>=MAX_ROWS){capped=true;break;}rows.push({id:gf(rec,['feedback_id','id','comment_id'])||('FB-'+String(rows.length+1).padStart(3,'0')),date:gf(rec,['date','created_time','time','timestamp','comment_time']),source:gf(rec,['source','channel']),seg:gf(rec,['player_segment','segment']),area:gf(rec,['game_area','area']),comment:fb});}return{rows,dropped,capped};}
 
 document.getElementById('loadBtn').onclick=()=>{if(!pendingRows){toast(t('t_choose'));return;}finalizeLoad(buildRows(pendingRows));};
 document.getElementById('sampleBtn').onclick=()=>finalizeLoad(buildRows(SAMPLE));
