@@ -419,7 +419,7 @@ function classifyPrompt(list,cats,owners,langName){return 'You are a game-commun
  +'owner: the single best team from: '+owners.join(' | ')+'.\n'
  +'summary: one short sentence in '+langName+'.\n'
  +'confidence: High, Medium or Low (your certainty).\n'
- +'Thai slang & sarcasm: "5555"/"555" = laughing; "หัวร้อน" = angry/tilted; "เพลิน" = relaxed/absorbed (mild positive); "เบื่อ" = bored (negative); anger words + "5555" usually mean frustration said jokingly. Judge the underlying intent, not just the emojis.\n'
+ +'Thai slang & sarcasm: "5555"/"555" and comedic emojis (🤣😅🤮) = playful joking; strain/anger/exaggeration words ("หัวร้อน","ไมเกรน","ปวดหัว","อนาถ") said WITH laughter or hyperbole = playful venting → mark NEUTRAL, not Negative. Plain complaints with no humor ("ปวดนิ้ว","ยาก","เบื่อ"), trust issues ("ล็อคผล" rigged), and real technical bugs stay Negative. "เพลิน" = enjoying/absorbed (positive). Judge the underlying intent.\n'
  +'Return ONLY a JSON array, no markdown:\n[{"id":"FB-001","sentiment":"Negative","category":"Gacha","priority":"High","owner":"Marketing","summary":"...","confidence":"High"}]\n\nComments:\n'+list;}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function estTokens(s){return Math.ceil((s||'').length/2.5);}            /* conservative (Thai-heavy) */
