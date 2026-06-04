@@ -598,4 +598,47 @@ const SAMPLE=[
  {feedback_id:"FB-019",date:"2026-05-10",source:"Store Review",player_segment:"Casual",game_area:"Content",player_feedback:"Add more PvE content, the grind is boring."},
  {feedback_id:"FB-020",date:"2026-05-10",source:"Facebook",player_segment:"Whale",game_area:"Gameplay",player_feedback:"Balance is off, the new character is way too strong."},
  {feedback_id:"FB-021",date:"2026-05-11",source:"Support",player_segment:"Core",game_area:"Support",player_feedback:"Customer support never replied to my ticket about lost items."},
- {feedback_id:"F
+ {feedback_id:"FB-022",date:"2026-05-11",source:"Facebook",player_segment:"New",game_area:"Positive",player_feedback:"กราฟิกสวยมาก เล่นลื่นบนมือถือเครื่องใหม่"},
+ {feedback_id:"FB-023",date:"2026-05-12",source:"Discord",player_segment:"Casual",game_area:"Gameplay",player_feedback:"Why did you nerf my favorite weapon? Please revert."},
+ {feedback_id:"FB-024",date:"2026-05-12",source:"Facebook",player_segment:"Core",game_area:"Community",player_feedback:"The community event was awesome, met so many new players!"}
+];
+
+/* ===== snapshot: save/share a single HTML with all data baked in ===== */
+function serializeState(){return {v:1,lang:LANG,theme:document.documentElement.getAttribute('data-theme'),rows:state.rows,classified:state.classified,insight:state.insight,dropped:state.dropped,capped:state.capped,sample:state.sample,lastPrompts:state.lastPrompts,fileName:fileLoadedName,vaLimits:(document.getElementById('vaLimits')||{}).value||'',cats:store.cats,owners:store.owners};}
+function restoreSnapshot(p){try{
+  if(p.cats) localStorage.setItem('pih_cats',(p.cats||[]).join(', '));
+  if(p.owners) localStorage.setItem('pih_owners',(p.owners||[]).join(', '));
+  if(p.theme) applyTheme(p.theme); if(p.lang) applyLang(p.lang);
+  state.rows=p.rows||[];state.classified=p.classified||[];state.insight=p.insight||'';state.dropped=p.dropped||0;state.capped=p.capped||false;state.sample=p.sample||[];state.lastPrompts=p.lastPrompts||{classify:'',summary:''};
+  fileLoadedName=p.fileName||'shared';
+  if(p.vaLimits&&document.getElementById('vaLimits'))document.getElementById('vaLimits').value=p.vaLimits;
+  if(state.rows.length){updateCleanNote();renderRawTable();document.getElementById('tableCard').style.display='block';document.getElementById('dropMain').textContent='✓ '+fileLoadedName;}
+  if(state.classified.length){computeCounts();renderClass();renderReport();renderInsight();renderPromptLog();['classCard','insightCard','reportCard'].forEach(function(id){document.getElementById(id).style.display='block';});}
+  if(state.sample&&state.sample.length){document.getElementById('vaCard').style.display='block';document.getElementById('vaLimCard').style.display='block';renderSample();}
+  var b=document.createElement('div');b.id='snapBanner';b.style.cssText='background:var(--accent-soft);color:var(--accent);padding:10px 16px;border-radius:10px;margin-bottom:16px;font-size:13.5px;font-weight:600;';b.textContent=t('snap_view');var m=document.querySelector('main');m.insertBefore(b,m.firstChild);
+}catch(e){console.error(e);toast('Snapshot load error');}}
+function saveSnapshot(){
+  var payload=serializeState();
+  var ob=document.getElementById('snapBanner'); if(ob)ob.remove();
+  var os=document.getElementById('pihSnap'); if(os)os.remove();
+  var kEl=document.getElementById('geminiKey'); var kv=kEl?kEl.value:''; if(kEl)kEl.value='';
+  var dyn=['rawTableWrap','classTableWrap','reportBody','insightBox','loadKpis','reportKpis','promptLog','vaList'];
+  var saved={}; dyn.forEach(function(id){var el=document.getElementById(id); if(el){saved[id]=el.innerHTML; el.innerHTML='';}});
+  var html='<!DOCTYPE html>\n'+document.documentElement.outerHTML;
+  dyn.forEach(function(id){var el=document.getElementById(id); if(el&&saved[id]!==undefined)el.innerHTML=saved[id];});
+  if(kEl)kEl.value=kv;
+  var json=JSON.stringify(payload).replace(/</g,'\\u003c');
+  html=html.replace(/<body([^>]*)>/, '<body$1>\n<script id="pihSnap">window.__SNAPSHOT__='+json+';<\/script>');
+  dl(new Blob([html],{type:'text/html;charset=utf-8'}),'TOSM_PlayerInsightHub_'+ts()+'.html');
+  toast(t('snap_saved'));
+}
+document.getElementById('saveSnapBtn').onclick=saveSnapshot;
+
+/* ===== init ===== */
+applyTheme(store.theme);
+applyLang(LANG);
+route();
+if(window.__SNAPSHOT__) restoreSnapshot(window.__SNAPSHOT__);
+</script>
+</body>
+</html>
