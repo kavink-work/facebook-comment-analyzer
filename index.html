@@ -203,9 +203,15 @@
     <input type="password" id="geminiKey" placeholder="gsk_..."/>
     <label class="fld" data-i18n="set_model">AI model</label>
     <select id="geminiModel">
-      <option value="llama-3.3-70b-versatile">Llama 3.3 70B (recommended)</option>
-      <option value="llama-3.1-8b-instant">Llama 3.1 8B (fastest)</option>
-      <option value="gemma2-9b-it">Gemma 2 9B</option>
+      <optgroup label="Groq — free, no billing">
+        <option value="llama-3.3-70b-versatile">Llama 3.3 70B (recommended)</option>
+        <option value="llama-3.1-8b-instant">Llama 3.1 8B (fastest)</option>
+        <option value="gemma2-9b-it">Gemma 2 9B</option>
+      </optgroup>
+      <optgroup label="Anthropic — paid, needs Claude key">
+        <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 (cheapest)</option>
+        <option value="claude-sonnet-4-6">Claude Sonnet 4.6 (smartest)</option>
+      </optgroup>
     </select>
     <label class="fld" id="setCatLabel">Categories</label>
     <textarea id="catList" style="min-height:70px"></textarea>
@@ -241,7 +247,7 @@ const T={
   va_draw_h:"Draw a review sample",va_draw_hint:"At least 10% of rows (exam minimum). Mark each as correct or not, add a note.",
   btn_draw:"🎲 Draw sample →",va_review_h:"Review",va_lim_h:"Limitations & notes",va_lim_hint:"Known limits of this AI workflow. Edit freely.",exp_val:"📝 Export Validation Note (Doc)",
   set_h:"⚙️ Settings",set_note:"Saved only in this browser. Never uploaded to GitHub.",
-  set_key:"Groq API key — free, no billing, at console.groq.com/keys",set_model:"AI model",set_cat:"Categories (comma-separated)",set_own:"Owners / teams (comma-separated)",
+  set_key:"API key — Groq key (free, console.groq.com/keys) OR Anthropic key for Claude (paid)",set_model:"AI model",set_cat:"Categories (comma-separated)",set_own:"Owners / teams (comma-separated)",
   btn_save:"Save",btn_close:"Close",btn_test:"🔌 Test connection",
   th_id:"ID",th_date:"Date",th_source:"Source",th_seg:"Segment",th_area:"Area",th_comment:"Feedback",th_sent:"Sentiment",th_cat:"Category",th_pri:"Priority",th_sum:"AI Summary",th_owner:"Owner",th_conf:"Conf.",
   kpi_ready:"Rows ready",kpi_total:"Total analyzed",kpi_neg:"Negative",kpi_high:"High priority",kpi_cats:"Categories",
@@ -249,6 +255,8 @@ const T={
   kept:"kept",removed:"blank / entry-code rows removed",cap:"(capped at 2,000)",
   t_file_ready:"File loaded — click \"Load data\"",t_choose:"Choose a file first",t_none:"No usable rows found",
   t_need_key:"Add your free Groq API key in ⚙️ Settings first",t_done:"Analysis complete ✓",t_saved:"Settings saved ✓",t_writing:"Writing summary…",
+  t_paused:"Paused at {n}/{t} (rate limit). Wait ~1 min, then click Resume — progress is kept.",btn_resume:"▶ Resume",t_eta:"~{m} min for {t} rows (paced for free tier).",
+  t_imported:"Loaded pre-classified results ✓",imported_note:"Imported from a classified file — charts, report and validation use these labels. For an AI-written narrative, add a key and click Classify.",
   t_testing:"Testing…",t_test_ok:"Connection OK ✓",exp_done:"Exported ✓",
   rep_exec:"Executive Summary",rep_over:"Feedback Overview",rep_top:"Top 5 Issues",rep_sent:"Sentiment Summary",rep_act:"Recommended Actions",rep_risk:"Risk / Things to Watch",rep_app:"Appendix — sample feedback",rep_wf:"Workflow Note",
   report_title:"TOSM Extreme — Player Feedback Report",gen:"Generated",analyzed:"rows analyzed",
@@ -275,7 +283,7 @@ const T={
   va_draw_h:"สุ่มตัวอย่างเพื่อตรวจ",va_draw_hint:"อย่างน้อย 10% ของแถว (ขั้นต่ำของข้อสอบ) ทำเครื่องหมายถูก/ผิด พร้อมโน้ต",
   btn_draw:"🎲 สุ่มตัวอย่าง →",va_review_h:"ตรวจทาน",va_lim_h:"ข้อจำกัดและบันทึก",va_lim_hint:"ข้อจำกัดของ workflow นี้ แก้ไขได้",exp_val:"📝 ส่งออก Validation Note (Doc)",
   set_h:"⚙️ ตั้งค่า",set_note:"บันทึกในเบราว์เซอร์นี้เท่านั้น ไม่ถูกอัปโหลดขึ้น GitHub",
-  set_key:"คีย์ Groq API — ฟรี ไม่ต้องผูกบัตร ที่ console.groq.com/keys",set_model:"โมเดล AI",set_cat:"หมวดหมู่ (คั่นด้วยจุลภาค)",set_own:"ทีมที่รับผิดชอบ (คั่นด้วยจุลภาค)",
+  set_key:"คีย์ API — Groq (ฟรี ที่ console.groq.com/keys) หรือ Anthropic สำหรับ Claude (เสียเงิน)",set_model:"โมเดล AI",set_cat:"หมวดหมู่ (คั่นด้วยจุลภาค)",set_own:"ทีมที่รับผิดชอบ (คั่นด้วยจุลภาค)",
   btn_save:"บันทึก",btn_close:"ปิด",btn_test:"🔌 ทดสอบการเชื่อมต่อ",
   th_id:"รหัส",th_date:"วันที่",th_source:"แหล่ง",th_seg:"กลุ่ม",th_area:"ส่วนเกม",th_comment:"ฟีดแบ็ก",th_sent:"อารมณ์",th_cat:"หมวดหมู่",th_pri:"ความสำคัญ",th_sum:"สรุป AI",th_owner:"ทีม",th_conf:"มั่นใจ",
   kpi_ready:"แถวพร้อมใช้",kpi_total:"วิเคราะห์ทั้งหมด",kpi_neg:"เชิงลบ",kpi_high:"ความสำคัญสูง",kpi_cats:"หมวดหมู่",
@@ -283,6 +291,8 @@ const T={
   kept:"เก็บไว้",removed:"แถวว่าง/โค้ดร่วมกิจกรรมถูกตัด",cap:"(จำกัดที่ 2,000)",
   t_file_ready:"โหลดไฟล์แล้ว — กด \"โหลดข้อมูล\"",t_choose:"เลือกไฟล์ก่อน",t_none:"ไม่พบแถวที่ใช้ได้",
   t_need_key:"เพิ่มคีย์ Groq API (ฟรี) ในเมนู ⚙️ ก่อน",t_done:"วิเคราะห์เสร็จแล้ว ✓",t_saved:"บันทึกแล้ว ✓",t_writing:"กำลังเขียนสรุป…",
+  t_paused:"หยุดที่ {n}/{t} (ชนลิมิต) รอ ~1 นาที แล้วกด Resume — ความคืบหน้าถูกเก็บไว้",btn_resume:"▶ ทำต่อ",t_eta:"~{m} นาที สำหรับ {t} แถว (หน่วงให้พอดีกับโควตาฟรี)",
+  t_imported:"โหลดผลที่จัดหมวดไว้แล้ว ✓",imported_note:"นำเข้าจากไฟล์ที่จัดหมวดแล้ว — กราฟ รายงาน และการตรวจสอบใช้ป้ายเหล่านี้ ถ้าต้องการสรุปด้วย AI ให้ใส่คีย์แล้วกด Classify",
   t_testing:"กำลังทดสอบ…",t_test_ok:"เชื่อมต่อสำเร็จ ✓",exp_done:"ส่งออกแล้ว ✓",
   rep_exec:"บทสรุปผู้บริหาร",rep_over:"ภาพรวมฟีดแบ็ก",rep_top:"5 ปัญหาหลัก",rep_sent:"สรุปอารมณ์",rep_act:"ข้อเสนอแนะ",rep_risk:"ความเสี่ยงที่ต้องจับตา",rep_app:"ภาคผนวก — ตัวอย่างฟีดแบ็ก",rep_wf:"หมายเหตุ Workflow",
   report_title:"TOSM Extreme — รายงานฟีดแบ็กผู้เล่น",gen:"สร้างเมื่อ",analyzed:"แถวที่วิเคราะห์",
@@ -317,7 +327,7 @@ const DEFAULT_OWNERS=["QA","Game Design","Marketing","Community","Product"];
 const MAX_ROWS=2000;
 const store={
   get key(){return localStorage.getItem('pih_gemini_key')||'';},
-  get model(){const m=localStorage.getItem('pih_gemini_model');const ok=['llama-3.3-70b-versatile','llama-3.1-8b-instant','gemma2-9b-it'];return ok.includes(m)?m:'llama-3.3-70b-versatile';},
+  get model(){const m=localStorage.getItem('pih_gemini_model');const ok=['llama-3.3-70b-versatile','llama-3.1-8b-instant','gemma2-9b-it','claude-haiku-4-5-20251001','claude-sonnet-4-6'];return ok.includes(m)?m:'llama-3.3-70b-versatile';},
   get cats(){const c=localStorage.getItem('pih_cats');return c?c.split(',').map(s=>s.trim()).filter(Boolean):DEFAULT_CATS.slice();},
   get owners(){const c=localStorage.getItem('pih_owners');return c?c.split(',').map(s=>s.trim()).filter(Boolean):DEFAULT_OWNERS.slice();},
   get theme(){return localStorage.getItem('pih_theme')||'light';},
@@ -365,7 +375,24 @@ function stripNoise(s){return String(s||'')
 function hasContent(s){return s && s.replace(/[^\p{L}\p{N}]/gu,'').length>=2;}
 function buildRows(recs){const rows=[];let dropped=0,capped=false;for(const rec of recs){let fb=clean(typeof rec==='string'?rec:gf(rec,['player_feedback','feedback','comment','message','text','content']));fb=stripNoise(fb);if(!hasContent(fb)){dropped++;continue;}if(rows.length>=MAX_ROWS){capped=true;break;}rows.push({id:gf(rec,['feedback_id','id','comment_id'])||('FB-'+String(rows.length+1).padStart(3,'0')),date:gf(rec,['date','created_time','time','timestamp','comment_time']),source:gf(rec,['source','channel']),seg:gf(rec,['player_segment','segment']),area:gf(rec,['game_area','area']),comment:fb});}return{rows,dropped,capped};}
 
-document.getElementById('loadBtn').onclick=()=>{if(!pendingRows){toast(t('t_choose'));return;}finalizeLoad(buildRows(pendingRows));};
+document.getElementById('loadBtn').onclick=()=>{if(!pendingRows){toast(t('t_choose'));return;}if(isClassified(pendingRows)){importClassified(pendingRows);}else{finalizeLoad(buildRows(pendingRows));}};
+function isClassified(recs){const r=recs&&recs[0];if(!r||typeof r!=='object')return false;const k=Object.keys(r).map(x=>String(x).toLowerCase().trim());return k.includes('sentiment')&&k.includes('category');}
+function importClassified(recs){
+  const rows=[];
+  for(const rec of recs){const fb=clean(stripNoise(gf(rec,['player_feedback','feedback','comment','message','text'])));if(!hasContent(fb))continue;if(rows.length>=MAX_ROWS)break;
+    rows.push({id:gf(rec,['feedback_id','id','comment_id'])||('FB-'+String(rows.length+1).padStart(3,'0')),date:gf(rec,['date','comment_time']),source:gf(rec,['source','channel']),seg:gf(rec,['player_segment','segment']),area:gf(rec,['game_area','area']),comment:fb,
+      sentiment:normSent(gf(rec,['sentiment'])),category:gf(rec,['category'])||'Other',priority:normPri(gf(rec,['priority'])),summary:clean(gf(rec,['ai_summary','summary'])),owner:gf(rec,['suggested_owner','owner']),confidence:normConf(gf(rec,['confidence'])),review_ok:null,review_note:clean(gf(rec,['review_note','note']))});}
+  if(!rows.length){toast(t('t_none'));return;}
+  state.rows=rows.map(r=>({id:r.id,date:r.date,source:r.source,seg:r.seg,area:r.area,comment:r.comment}));
+  state.classified=rows;state.dropped=0;state.capped=false;state.sample=[];
+  updateCleanNote();renderRawTable();computeCounts();renderClass();renderReport();
+  state.insight=buildComputedInsight();renderInsight();renderPromptLog();
+  ['tableCard','classCard','insightCard','reportCard'].forEach(id=>document.getElementById(id).style.display='block');
+  document.getElementById('classCard').scrollIntoView({behavior:'smooth'});toast(t('t_imported'));
+}
+function buildComputedInsight(){const {sent,cat,pri}=state.counts;const total=state.classified.length;if(!total)return '';
+  const top=Object.entries(cat).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([k,v])=>esc(k)+' ('+v+')').join(', ');
+  return '<p>'+total+' '+t('analyzed')+' · '+sentLabel('Positive')+' '+Math.round((sent.Positive||0)/total*100)+'% · '+sentLabel('Neutral')+' '+Math.round((sent.Neutral||0)/total*100)+'% · '+sentLabel('Negative')+' '+Math.round((sent.Negative||0)/total*100)+'% · '+t('kpi_high')+': '+(pri.High||0)+'.</p><p><b>'+t('rep_top')+':</b> '+top+'.</p><p class="muted">'+t('imported_note')+'</p>';}
 document.getElementById('sampleBtn').onclick=()=>finalizeLoad(buildRows(SAMPLE));
 function finalizeLoad({rows,dropped,capped}){if(!rows.length){toast(t('t_none'));return;}state.rows=rows;state.dropped=dropped;state.capped=capped;state.classified=[];state.insight='';state.counts={};state.sample=[];updateCleanNote();renderRawTable();document.getElementById('tableCard').style.display='block';['classCard','insightCard','reportCard'].forEach(id=>document.getElementById(id).style.display='none');document.getElementById('tableCard').scrollIntoView({behavior:'smooth'});}
 function updateCleanNote(){document.getElementById('cleanNote').textContent='· '+state.rows.length+' '+t('kept')+(state.dropped?', '+state.dropped+' '+t('removed'):'')+(state.capped?' '+t('cap'):'');}
@@ -373,7 +400,14 @@ function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','
 function renderRawTable(){document.getElementById('loadKpis').innerHTML='<div class="kpi"><div class="num">'+state.rows.length+'</div><div class="lbl">'+t('kpi_ready')+'</div></div>';let h='<table><thead><tr><th>'+t('th_id')+'</th><th>'+t('th_date')+'</th><th>'+t('th_source')+'</th><th>'+t('th_seg')+'</th><th>'+t('th_area')+'</th><th>'+t('th_comment')+'</th></tr></thead><tbody>';state.rows.forEach(r=>h+='<tr><td>'+esc(r.id)+'</td><td>'+esc(r.date||'—')+'</td><td>'+esc(r.source||'—')+'</td><td>'+esc(r.seg||'—')+'</td><td>'+esc(r.area||'—')+'</td><td class="comment">'+esc(r.comment)+'</td></tr>');document.getElementById('rawTableWrap').innerHTML=h+'</tbody></table>';}
 
 /* ===== AI ===== */
-async function aiCall(prompt){const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+store.key},body:JSON.stringify({model:store.model,temperature:0.2,messages:[{role:'user',content:prompt}]})});let data;try{data=await res.json();}catch(e){throw new Error('HTTP '+res.status+' '+res.statusText);}if(!res.ok||data.error)throw new Error((data.error&&(data.error.message||data.error.code))||('HTTP '+res.status));return data.choices?.[0]?.message?.content||'';}
+async function aiCall(prompt){
+  const isClaude=/^claude/i.test(store.model);
+  let url,headers,body;
+  if(isClaude){url='https://api.anthropic.com/v1/messages';headers={'Content-Type':'application/json','x-api-key':store.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'};body=JSON.stringify({model:store.model,max_tokens:2048,temperature:0.2,messages:[{role:'user',content:prompt}]});}
+  else{url='https://api.groq.com/openai/v1/chat/completions';headers={'Content-Type':'application/json','Authorization':'Bearer '+store.key};body=JSON.stringify({model:store.model,temperature:0.2,messages:[{role:'user',content:prompt}]});}
+  const res=await fetch(url,{method:'POST',headers,body});let data;try{data=await res.json();}catch(e){throw new Error('HTTP '+res.status+' '+res.statusText);}
+  if(!res.ok||data.error)throw new Error((data.error&&(data.error.message||data.error.code))||('HTTP '+res.status));
+  return isClaude?(data.content?.[0]?.text||''):(data.choices?.[0]?.message?.content||'');}
 function parseArr(raw){let x=raw.trim().replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();const s=x.indexOf('['),e=x.lastIndexOf(']');if(s>=0&&e>=0)x=x.slice(s,e+1);try{return JSON.parse(x);}catch(_){return [];}}
 function normSent(s){s=(s||'').toLowerCase();if(s.startsWith('pos'))return'Positive';if(s.startsWith('neg'))return'Negative';return'Neutral';}
 function normPri(p){p=(p||'').toLowerCase();if(p.startsWith('h'))return'High';if(p.startsWith('l'))return'Low';return'Medium';}
@@ -385,28 +419,47 @@ function classifyPrompt(list,cats,owners,langName){return 'You are a game-commun
  +'owner: the single best team from: '+owners.join(' | ')+'.\n'
  +'summary: one short sentence in '+langName+'.\n'
  +'confidence: High, Medium or Low (your certainty).\n'
+ +'Thai slang & sarcasm: "5555"/"555" = laughing; "หัวร้อน" = angry/tilted; "เพลิน" = relaxed/absorbed (mild positive); "เบื่อ" = bored (negative); anger words + "5555" usually mean frustration said jokingly. Judge the underlying intent, not just the emojis.\n'
  +'Return ONLY a JSON array, no markdown:\n[{"id":"FB-001","sentiment":"Negative","category":"Gacha","priority":"High","owner":"Marketing","summary":"...","confidence":"High"}]\n\nComments:\n'+list;}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function estTokens(s){return Math.ceil((s||'').length/2.5);}            /* conservative (Thai-heavy) */
+function parseRetry(m){const x=(m||'').match(/in ([\d.]+)s/i)||(m||'').match(/([\d.]+)\s*s\b/);return x?Math.ceil(parseFloat(x[1]))+2:15;}
+function mapRow(r,f,cats,owners){f=f||{};return {...r,sentiment:normSent(f.sentiment),category:cats.includes(f.category)?f.category:(cats[cats.length-1]||'Other'),priority:normPri(f.priority),owner:owners.includes(f.owner)?f.owner:(owners[0]||''),summary:clean(f.summary)||'',confidence:normConf(f.confidence),review_ok:null,review_note:''};}
+let _run={results:[],idx:0};
 document.getElementById('analyzeBtn').onclick=analyze;
 async function analyze(){
   if(!store.key){toast(t('t_need_key'));openSettings();return;}
-  const btn=document.getElementById('analyzeBtn');btn.disabled=true;const orig=btn.innerHTML;
+  const btn=document.getElementById('analyzeBtn');btn.disabled=true;
+  const cats=store.cats,owners=store.owners,langName=LANG==='th'?'Thai':'English';
+  const B=20,TPM=5400; let winStart=Date.now(),winTok=0;
+  if(_run.idx<=0||_run.idx>=state.rows.length){_run={results:[],idx:0};}
+  if(_run.idx===0&&state.rows.length>120){const m=Math.max(1,Math.ceil(state.rows.length*70/TPM));toast(t('t_eta').replace('{m}',m).replace('{t}',state.rows.length));}
   try{
-    const cats=store.cats,owners=store.owners,langName=LANG==='th'?'Thai':'English';const B=25,results=[];
-    for(let i=0;i<state.rows.length;i+=B){
+    for(let i=_run.idx;i<state.rows.length;i+=B){
       const batch=state.rows.slice(i,i+B);
-      btn.innerHTML='<span class="spin"></span> '+Math.min(i+B,state.rows.length)+'/'+state.rows.length+'…';
       const list=batch.map(r=>r.id+'. '+r.comment).join('\n');
       const pr=classifyPrompt(list,cats,owners,langName);state.lastPrompts.classify=pr;
-      let part=[]; for(let attempt=0;attempt<3;attempt++){try{part=parseArr(await aiCall(pr));break;}catch(err){if((err.message||'').match(/429|rate/i)&&attempt<2){await new Promise(r=>setTimeout(r,4000));continue;}throw err;}}
-      results.push(...part); if(i+B<state.rows.length) await new Promise(r=>setTimeout(r,250));
+      const est=estTokens(pr)+batch.length*45;
+      if(Date.now()-winStart>=60000){winStart=Date.now();winTok=0;}
+      if(winTok+est>TPM){const w=60000-(Date.now()-winStart);btn.innerHTML='<span class="spin"></span> '+i+'/'+state.rows.length+' ⏳';await sleep(Math.max(0,w)+300);winStart=Date.now();winTok=0;}
+      btn.innerHTML='<span class="spin"></span> '+Math.min(i+B,state.rows.length)+'/'+state.rows.length+'…';
+      let part=null;
+      for(let a=0;a<8;a++){try{part=parseArr(await aiCall(pr));winTok+=est;break;}catch(err){const m=err.message||'';if(/429|rate|tpm|rpm|tokens per|too many/i.test(m)){const w=parseRetry(m);btn.innerHTML='<span class="spin"></span> ⏳ '+w+'s';await sleep(w*1000);winStart=Date.now();winTok=0;continue;}throw err;}}
+      if(part===null)throw new Error('rate limit');
+      _run.results.push(...part);_run.idx=i+B;
     }
-    state.classified=state.rows.map((r,idx)=>{const f=results.find(x=>x&&String(x.id)===String(r.id))||results[idx]||{};return {...r,sentiment:normSent(f.sentiment),category:cats.includes(f.category)?f.category:(cats[cats.length-1]||'Other'),priority:normPri(f.priority),owner:owners.includes(f.owner)?f.owner:(owners[0]||''),summary:clean(f.summary)||'',confidence:normConf(f.confidence),review_ok:null,review_note:''};});
-    computeCounts();renderClass();renderReport();
+    state.classified=state.rows.map((r,idx)=>mapRow(r,_run.results.find(x=>x&&String(x.id)===String(r.id))||_run.results[idx],cats,owners));
+    computeCounts();renderClass();renderReport();['classCard','reportCard'].forEach(id=>document.getElementById(id).style.display='block');
     btn.innerHTML='<span class="spin"></span> '+t('t_writing');
-    state.insight=await summarize();renderInsight();
-    ['classCard','insightCard','reportCard'].forEach(id=>document.getElementById(id).style.display='block');
-    renderPromptLog();document.getElementById('classCard').scrollIntoView({behavior:'smooth'});toast(t('t_done'));
-  }catch(err){toast('AI: '+err.message);console.error(err);}finally{btn.disabled=false;btn.innerHTML=orig;}
+    for(let a=0;a<6;a++){try{state.insight=await summarize();break;}catch(err){const m=err.message||'';if(/429|rate|tpm|rpm/i.test(m)){await sleep(parseRetry(m)*1000);continue;}state.insight='<p class="muted">'+esc(m)+'</p>';break;}}
+    renderInsight();document.getElementById('insightCard').style.display='block';renderPromptLog();
+    _run={results:[],idx:0};document.getElementById('classCard').scrollIntoView({behavior:'smooth'});toast(t('t_done'));
+    btn.disabled=false;btn.innerHTML=t('btn_analyze');
+  }catch(err){
+    if(_run.results.length){state.classified=state.rows.slice(0,_run.idx).map((r,idx)=>mapRow(r,_run.results.find(x=>x&&String(x.id)===String(r.id))||_run.results[idx],cats,owners));computeCounts();renderClass();renderReport();['classCard','reportCard'].forEach(id=>document.getElementById(id).style.display='block');renderPromptLog();}
+    toast('⏸ '+t('t_paused').replace('{n}',_run.idx).replace('{t}',state.rows.length));
+    btn.disabled=false;btn.innerHTML=t('btn_resume');
+  }
 }
 async function summarize(){
   const langName=LANG==='th'?'Thai':'English';const {sent,cat,pri}=state.counts;
