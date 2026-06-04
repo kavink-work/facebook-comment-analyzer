@@ -84,6 +84,7 @@
   <div class="spacer"></div>
   <button class="icon-btn" id="langBtn" title="ภาษา / Language">ไทย</button>
   <button class="icon-btn" id="themeBtn" title="Theme">🌙</button>
+  <button class="icon-btn" id="saveSnapBtn" title="Save a shareable copy with all data">💾</button>
   <button class="icon-btn" id="settingsBtn" title="Settings">⚙️</button>
 </header>
 <main>
@@ -257,6 +258,7 @@ const T={
   t_need_key:"Add your free Groq API key in ⚙️ Settings first",t_done:"Analysis complete ✓",t_saved:"Settings saved ✓",t_writing:"Writing summary…",
   t_paused:"Paused at {n}/{t} (rate limit). Wait ~1 min, then click Resume — progress is kept.",btn_resume:"▶ Resume",t_eta:"~{m} min for {t} rows (paced for free tier).",
   t_imported:"Loaded pre-classified results ✓",imported_note:"Imported from a classified file — charts, report and validation use these labels. For an AI-written narrative, add a key and click Classify.",
+  snap_saved:"Saved a shareable copy (single HTML with all data) ✓ — send THIS file.",snap_view:"📄 You are viewing a shared snapshot — all data was loaded from the file.",
   t_testing:"Testing…",t_test_ok:"Connection OK ✓",exp_done:"Exported ✓",
   rep_exec:"Executive Summary",rep_over:"Feedback Overview",rep_top:"Top 5 Issues",rep_sent:"Sentiment Summary",rep_act:"Recommended Actions",rep_risk:"Risk / Things to Watch",rep_app:"Appendix — sample feedback",rep_wf:"Workflow Note",
   report_title:"TOSM Extreme — Player Feedback Report",gen:"Generated",analyzed:"rows analyzed",
@@ -293,6 +295,7 @@ const T={
   t_need_key:"เพิ่มคีย์ Groq API (ฟรี) ในเมนู ⚙️ ก่อน",t_done:"วิเคราะห์เสร็จแล้ว ✓",t_saved:"บันทึกแล้ว ✓",t_writing:"กำลังเขียนสรุป…",
   t_paused:"หยุดที่ {n}/{t} (ชนลิมิต) รอ ~1 นาที แล้วกด Resume — ความคืบหน้าถูกเก็บไว้",btn_resume:"▶ ทำต่อ",t_eta:"~{m} นาที สำหรับ {t} แถว (หน่วงให้พอดีกับโควตาฟรี)",
   t_imported:"โหลดผลที่จัดหมวดไว้แล้ว ✓",imported_note:"นำเข้าจากไฟล์ที่จัดหมวดแล้ว — กราฟ รายงาน และการตรวจสอบใช้ป้ายเหล่านี้ ถ้าต้องการสรุปด้วย AI ให้ใส่คีย์แล้วกด Classify",
+  snap_saved:"บันทึกสำเนาที่แชร์ได้ (HTML ไฟล์เดียว พร้อมข้อมูลทั้งหมด) ✓ — ส่งไฟล์นี้",snap_view:"📄 กำลังดูสแน็ปช็อตที่แชร์มา — ข้อมูลทั้งหมดถูกโหลดจากไฟล์แล้ว",
   t_testing:"กำลังทดสอบ…",t_test_ok:"เชื่อมต่อสำเร็จ ✓",exp_done:"ส่งออกแล้ว ✓",
   rep_exec:"บทสรุปผู้บริหาร",rep_over:"ภาพรวมฟีดแบ็ก",rep_top:"5 ปัญหาหลัก",rep_sent:"สรุปอารมณ์",rep_act:"ข้อเสนอแนะ",rep_risk:"ความเสี่ยงที่ต้องจับตา",rep_app:"ภาคผนวก — ตัวอย่างฟีดแบ็ก",rep_wf:"หมายเหตุ Workflow",
   report_title:"TOSM Extreme — รายงานฟีดแบ็กผู้เล่น",gen:"สร้างเมื่อ",analyzed:"แถวที่วิเคราะห์",
@@ -595,15 +598,4 @@ const SAMPLE=[
  {feedback_id:"FB-019",date:"2026-05-10",source:"Store Review",player_segment:"Casual",game_area:"Content",player_feedback:"Add more PvE content, the grind is boring."},
  {feedback_id:"FB-020",date:"2026-05-10",source:"Facebook",player_segment:"Whale",game_area:"Gameplay",player_feedback:"Balance is off, the new character is way too strong."},
  {feedback_id:"FB-021",date:"2026-05-11",source:"Support",player_segment:"Core",game_area:"Support",player_feedback:"Customer support never replied to my ticket about lost items."},
- {feedback_id:"FB-022",date:"2026-05-11",source:"Facebook",player_segment:"New",game_area:"Positive",player_feedback:"กราฟิกสวยมาก เล่นลื่นบนมือถือเครื่องใหม่"},
- {feedback_id:"FB-023",date:"2026-05-12",source:"Discord",player_segment:"Casual",game_area:"Gameplay",player_feedback:"Why did you nerf my favorite weapon? Please revert."},
- {feedback_id:"FB-024",date:"2026-05-12",source:"Facebook",player_segment:"Core",game_area:"Community",player_feedback:"The community event was awesome, met so many new players!"}
-];
-
-/* ===== init ===== */
-applyTheme(store.theme);
-applyLang(LANG);
-route();
-</script>
-</body>
-</html>
+ {feedback_id:"F
